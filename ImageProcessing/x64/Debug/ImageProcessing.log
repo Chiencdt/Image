@@ -1,2 +1,7 @@
-﻿  readbmpimage.cpp
+﻿  main.cpp
+  readbmpimage.cpp
+D:\LearnCpp\ImageProcessing\ImageProcessing\readbmpimage.cpp(177,21): warning C4018: '<': signed/unsigned mismatch
+D:\LearnCpp\ImageProcessing\ImageProcessing\readbmpimage.cpp(185,23): warning C4018: '<': signed/unsigned mismatch
+D:\LearnCpp\ImageProcessing\ImageProcessing\readbmpimage.cpp(199,23): warning C4018: '<': signed/unsigned mismatch
+  Generating Code...
   ImageProcessing.vcxproj -> D:\LearnCpp\ImageProcessing\x64\Debug\ImageProcessing.exe

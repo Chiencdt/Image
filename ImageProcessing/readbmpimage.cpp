@@ -12,7 +12,7 @@ void ReadBmpImage::GetImage(const std::string& path,
 
 	_path = path;
 	_nameFile = nameFile;
-	std::string fullPath = _path + "//" + _nameFile + ".bmp";
+	std::string fullPath = _path + _nameFile + ".bmp";
 	ReadImage(fullPath);
 
 }
@@ -43,18 +43,43 @@ void ReadBmpImage::ReadImage(const std::string& fullPath)
 			return;
 		}
 
-		// Print image dimensions
-		std::cout << "Width: " << infoHeader.width << std::endl;
-		std::cout << "Height: " << infoHeader.height << std::endl;
+		file.seekg(18, std::ios::beg); // Move to the position of width in the info header
+		int32_t width;
+		file.read(reinterpret_cast<char*>(&width), sizeof(int32_t));
+
+		file.seekg(22, std::ios::beg); // Move to the position of height in the info header
+		int32_t height;
+		file.read(reinterpret_cast<char*>(&height), sizeof(int32_t));
+
+		file.seekg(10, std::ios::beg); // Move to the position of data offset
+		uint32_t dataOffset;
+		file.read(reinterpret_cast<char*>(&dataOffset), sizeof(uint32_t));
+
+		file.seekg(28, std::ios::beg); // Move to the position of bit per pixel
+		uint32_t bitPerPixel;
+		file.read(reinterpret_cast<char*>(&bitPerPixel), sizeof(uint32_t));
+
+		std::cout << "bitPerPixel: " << bitPerPixel << std::endl;
 
 		// Read image data (assuming 24 bits per pixel)
-		int dataSize = infoHeader.width * infoHeader.height * 3; // 3 bytes per pixel (RGB)
-		std::shared_ptr<uint8_t> imageData(new uint8_t[dataSize]);
-		file.seekg(header.dataOffset, std::ios::beg); // Move to the beginning of image data
+		uint32_t dataSize = width * height;
+		if (bitPerPixel == 24) {
+
+			dataSize = width * height * 3;
+
+		}
+
+		uint32_t padding = (4 - (width * 3) % 4) % 4;
+		dataSize += padding * height;
+
+		std::shared_ptr<uint32_t[]> imageData(new uint32_t[dataSize]);
+		file.seekg(dataOffset, std::ios::beg); // Move to the beginning of image data
 		file.read(reinterpret_cast<char*>(imageData.get()), dataSize);
 
 		// Close the file
 		file.close();
+
+		SaveImageToTxt(fullPath, imageData, width, height, bitPerPixel);
 
 	}
 
@@ -141,16 +166,55 @@ std::vector<std::string> ReadBmpImage::ConvWstringToString(const std::wstring& s
 
 }
 
-void ReadBmpImage::SaveImageToTxt(const std::string& fileName, uint8_t *data, int sizeData) const
+void ReadBmpImage::SaveImageToTxt(const std::string& fileName, const std::shared_ptr<uint32_t[]> &data, uint32_t width, uint32_t height, uint32_t bitPerPixel) const
 {
-
-	std::ofstream file(fileName);
+	std::string f = "D:\\Image\\2021_05_03\\UP0305\\2.txt";
+	std::ofstream file(f);
 	if (file.is_open())
 	{
-		for (int sData = 0; sData < sizeData; sData++)
+
+		uint32_t index = 0;
+		for (int h = 0; h < height; h++)
 		{
-			file << static_cast<int>(data[sData]) << " ";
+
+			if (bitPerPixel == 24) {
+
+				index = h * width * 3;
+				uint32_t* value = &data.get()[index];
+
+				for (int w = 0; w < width; w++)
+				{
+
+					file << static_cast<int>(*value) << " ";
+					file << static_cast<int>(*(value++)) << " ";
+					file << static_cast<int>(*(value++)) << " ";
+					value++;
+
+				}
+			}
+			else {
+
+				index = h * width;
+				uint32_t* value = &data.get()[index];
+				for (int w = 0; w < width; w++)
+				{
+
+					file << static_cast<int>(*value) << " ";
+					value++;
+
+				}
+			}
+
 		}
+		/*for (int sData = 0; sData < sizeData; sData++)
+		{
+			
+			file << static_cast<int>(*value) << " ";
+			if (sData != (sizeData - 1)) {
+				value++;
+			}
+
+		}*/
 		file.close();
 		std::cout << "Image data saved to " << fileName << std::endl;
 	}

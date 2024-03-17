@@ -21,7 +21,7 @@ public:
 
 	std::vector<std::string> ConvWstringToString(const std::wstring&) const;
 
-	void SaveImageToTxt(const std::string&, uint8_t*, int) const;
+	void SaveImageToTxt(const std::string&, const std::shared_ptr<uint32_t[]>&, uint32_t, uint32_t, uint32_t)	const;
 
 private:
 	std::string _path;
