@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <Windows.h>
+#include <fstream>
 
 class ReadBmpImage
 {
@@ -21,7 +22,11 @@ public:
 
 	std::vector<std::string> ConvWstringToString(const std::wstring&) const;
 
-	void SaveImageToTxt(const std::string&, const std::shared_ptr<uint32_t[]>&, uint32_t, uint32_t, uint32_t)	const;
+	void SaveImageToTxt(const std::string&, const std::shared_ptr<uint8_t[]>&, uint32_t, uint32_t, uint32_t) const;
+
+	std::uint32_t GetInfoHeader(std::ifstream&, const uint32_t) const;
+
+	std::uint16_t GetShortInfoHeader(std::ifstream&, const uint16_t) const;
 
 private:
 	std::string _path;

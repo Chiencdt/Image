@@ -6,6 +6,12 @@
 const std::wstring _emptyWstring(L"");
 const std::string _emptyString("");
 
+const uint32_t _width = 18;
+const uint32_t _height = 22;
+const uint32_t _dataOffset = 10;
+const uint32_t _bitPerPixel = 28;
+const uint16_t _signature = 0;
+
 void ReadBmpImage::GetImage(const std::string& path,
 							const std::string& nameFile) 
 {
@@ -30,36 +36,41 @@ void ReadBmpImage::ReadImage(const std::string& fullPath)
 			return;
 		}
 
-		BMPHeader header;
-		BMPInfoHeader infoHeader;
+		/*BMPHeader header;
+		BMPInfoHeader infoHeader;*/
 
 		// Read BMP header
-		file.read(reinterpret_cast<char*>(&header), sizeof(BMPHeader));
-		file.read(reinterpret_cast<char*>(&infoHeader), sizeof(BMPInfoHeader));
+		/*file.read(reinterpret_cast<char*>(&header), sizeof(BMPHeader));
+		file.read(reinterpret_cast<char*>(&infoHeader), sizeof(BMPInfoHeader));*/
+
+		uint16_t signature(GetShortInfoHeader(file, _signature));
 
 		// Check if the file is actually a BMP file by verifying signature
-		if (header.signature != 0x4D42) {
+		if (signature != 0x4D42) {
 			std::cerr << "Error: Not a BMP file." << std::endl;
 			return;
 		}
 
-		file.seekg(18, std::ios::beg); // Move to the position of width in the info header
-		int32_t width;
-		file.read(reinterpret_cast<char*>(&width), sizeof(int32_t));
+		//file.seekg(18, std::ios::beg); // Move to the position of width in the info header
+		//int32_t width;
+		//file.read(reinterpret_cast<char*>(&width), sizeof(int32_t));
 
-		file.seekg(22, std::ios::beg); // Move to the position of height in the info header
-		int32_t height;
-		file.read(reinterpret_cast<char*>(&height), sizeof(int32_t));
+		//file.seekg(22, std::ios::beg); // Move to the position of height in the info header
+		//int32_t height;
+		//file.read(reinterpret_cast<char*>(&height), sizeof(int32_t));
 
-		file.seekg(10, std::ios::beg); // Move to the position of data offset
-		uint32_t dataOffset;
-		file.read(reinterpret_cast<char*>(&dataOffset), sizeof(uint32_t));
+		//file.seekg(10, std::ios::beg); // Move to the position of data offset
+		//uint32_t dataOffset;
+		//file.read(reinterpret_cast<char*>(&dataOffset), sizeof(uint32_t));
 
-		file.seekg(28, std::ios::beg); // Move to the position of bit per pixel
-		uint32_t bitPerPixel;
-		file.read(reinterpret_cast<char*>(&bitPerPixel), sizeof(uint32_t));
+		//file.seekg(28, std::ios::beg); // Move to the position of bit per pixel
+		//uint32_t bitPerPixel;
+		//file.read(reinterpret_cast<char*>(&bitPerPixel), sizeof(uint32_t));
 
-		std::cout << "bitPerPixel: " << bitPerPixel << std::endl;
+		int32_t width(GetInfoHeader(file, _width));
+		int32_t height(GetInfoHeader(file, _height));
+		int32_t dataOffset(GetInfoHeader(file, _dataOffset));
+		int32_t bitPerPixel(GetInfoHeader(file, _bitPerPixel));
 
 		// Read image data (assuming 24 bits per pixel)
 		uint32_t dataSize = width * height;
@@ -72,7 +83,7 @@ void ReadBmpImage::ReadImage(const std::string& fullPath)
 		uint32_t padding = (4 - (width * 3) % 4) % 4;
 		dataSize += padding * height;
 
-		std::shared_ptr<uint32_t[]> imageData(new uint32_t[dataSize]);
+		std::shared_ptr<uint8_t[]> imageData(new uint8_t[dataSize]);
 		file.seekg(dataOffset, std::ios::beg); // Move to the beginning of image data
 		file.read(reinterpret_cast<char*>(imageData.get()), dataSize);
 
@@ -166,7 +177,7 @@ std::vector<std::string> ReadBmpImage::ConvWstringToString(const std::wstring& s
 
 }
 
-void ReadBmpImage::SaveImageToTxt(const std::string& fileName, const std::shared_ptr<uint32_t[]> &data, uint32_t width, uint32_t height, uint32_t bitPerPixel) const
+void ReadBmpImage::SaveImageToTxt(const std::string& fileName, const std::shared_ptr<uint8_t[]> &data, uint32_t width, uint32_t height, uint32_t bitPerPixel) const
 {
 	std::string f = "D:\\Image\\2021_05_03\\UP0305\\2.txt";
 	std::ofstream file(f);
@@ -180,7 +191,7 @@ void ReadBmpImage::SaveImageToTxt(const std::string& fileName, const std::shared
 			if (bitPerPixel == 24) {
 
 				index = h * width * 3;
-				uint32_t* value = &data.get()[index];
+				uint8_t* value = &data.get()[index];
 
 				for (int w = 0; w < width; w++)
 				{
@@ -195,7 +206,7 @@ void ReadBmpImage::SaveImageToTxt(const std::string& fileName, const std::shared
 			else {
 
 				index = h * width;
-				uint32_t* value = &data.get()[index];
+				uint8_t* value = &data.get()[index];
 				for (int w = 0; w < width; w++)
 				{
 
@@ -223,3 +234,22 @@ void ReadBmpImage::SaveImageToTxt(const std::string& fileName, const std::shared
 	}
 }
 
+std::uint32_t ReadBmpImage::GetInfoHeader(std::ifstream& file, const uint32_t info) const
+{
+
+	file.seekg(info, std::ios::beg); // Move to the position of width in the info header
+	int32_t infoHeader;
+	file.read(reinterpret_cast<char*>(&infoHeader), sizeof(int32_t));
+	return infoHeader;
+
+}
+
+std::uint16_t ReadBmpImage::GetShortInfoHeader(std::ifstream& file, const uint16_t info) const
+{
+
+	file.seekg(info, std::ios::beg); // Move to the position of width in the info header
+	uint16_t infoHeader;
+	file.read(reinterpret_cast<char*>(&infoHeader), sizeof(uint16_t));
+	return infoHeader;
+
+}
